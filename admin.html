@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Durga Enterprises – Requests</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;margin:0;background:#f6f3ee;color:#16202e}main{max-width:900px;margin:0 auto;padding:24px 20px}h1{margin:0 0 16px}
+.card{background:#fff;border:1px solid #dfd9cf;border-radius:14px;padding:16px;margin:0 0 12px}.card.done{opacity:.55}.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+button,input{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid #c9c2b5;background:#fff}button{cursor:pointer}a{color:#8a5a00;font-weight:600}small{color:#5d6877}#err{color:#b00020}</style></head><body><main>
+<h1>Service requests</h1>
+<form id="login"><input id="tok" type="password" placeholder="Admin password" autocomplete="current-password" required> <button>View requests</button> <span id="err"></span></form>
+<div id="list"></div></main>
+<script>
+var tok=sessionStorage.getItem("t")||"";
+function h(){return{Authorization:"Bearer "+tok}}
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+async function load(){var r=await fetch("/api/requests",{headers:h()});
+ if(!r.ok){document.getElementById("err").textContent="Wrong password or admin not set up.";return}
+ document.getElementById("login").style.display="none";var rows=await r.json(),el=document.getElementById("list");
+ el.innerHTML=rows.length?"":"<p>No requests yet.</p>";
+ rows.forEach(function(x){var c=document.createElement("div");c.className="card"+(x.status==="done"?" done":"");
+  c.innerHTML='<div class="top"><strong>'+esc(x.name)+'</strong><small>'+new Date(x.createdAt).toLocaleString()+'</small></div><div>'+esc(x.service)+'</div><p>'+esc(x.message||"")+'</p><a href="tel:'+esc(x.phone.replace(/[^\d+]/g,""))+'">'+esc(x.phone)+'</a> &nbsp; <button data-a="t">'+(x.status==="done"?"Reopen":"Mark done")+'</button> <button data-a="d">Delete</button>';
+  c.querySelector('[data-a=t]').onclick=async function(){await fetch("/api/requests/"+x.id,{method:"PATCH",headers:h()});load()};
+  c.querySelector('[data-a=d]').onclick=async function(){if(confirm("Delete this request?")){await fetch("/api/requests/"+x.id,{method:"DELETE",headers:h()});load()}};
+  el.appendChild(c)})}
+document.getElementById("login").onsubmit=function(e){e.preventDefault();tok=document.getElementById("tok").value;sessionStorage.setItem("t",tok);load()};
+if(tok)load();
+</script></body></html>
