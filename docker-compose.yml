@@ -1,0 +1,23 @@
+# Lives on the EC2 server (copy this file, Caddyfile and .env there)
+services:
+  app:
+    image: ${IMAGE}
+    restart: unless-stopped
+    environment:
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      NOTIFY_WEBHOOK: ${NOTIFY_WEBHOOK:-}
+    volumes:
+      - requests:/data
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [app]
+volumes:
+  requests:
+  caddy_data:
